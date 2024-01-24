@@ -27,6 +27,7 @@ signals:
     void try_login();
 
 private slots:
+
     void checkConnection();
     void checkAuth();
 

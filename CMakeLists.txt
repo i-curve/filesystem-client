@@ -27,6 +27,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         config.h config.cpp
         util.hpp
         bucket.h bucket.cpp
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET filesystem-client APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -46,10 +47,11 @@ else()
     endif()
 endif()
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 target_link_libraries(filesystem-client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network
-    nlohmann_json::nlohmann_json)
+    nlohmann_json::nlohmann_json fmt::fmt)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

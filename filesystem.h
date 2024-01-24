@@ -18,9 +18,15 @@ public:
     Filesystem(QWidget *parent = nullptr);
     ~Filesystem();
 
-    QList<Bucket> GetBuckets();
+public slots:
+    void init();
+    void parseBucket();
+    void tableDoubleClick(int, int);
+    void intoDir();
 
 private:
     Ui::Filesystem *ui;
+    std::string currentBucket;
+    std::string currentKey;
 };
 #endif // FILESYSTEM_H

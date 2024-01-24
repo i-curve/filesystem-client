@@ -6,7 +6,10 @@
 #include <functional>
 #include <tuple>
 #include <variant>
-#include <string>
+
+class UTIL {
+public:
+};
 
 #define defer1(a, b) a##b
 #define defer2(a, b) defer1(a, b)

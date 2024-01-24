@@ -54,13 +54,10 @@ bool Login::checkInput(bool flag) {
 void Login::checkAuth() {
     QNetworkReply *reply = (QNetworkReply *)(sender());
     if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 200) {
-        qDebug() << reply->error();
-        qDebug() << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
         QMessageBox::information(this, "提示", "身份认证失败");
         this->ui->pushButton->setDisabled(false);
         return;
     }
-    qDebug() << reply->readAll();
     config.Write(ui->checkBox->isChecked());
     this->close();
     emit try_login();

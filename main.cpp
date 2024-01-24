@@ -1,3 +1,4 @@
+#define FMT_HEADER_ONLY
 #include "filesystem.h"
 #include "login.h"
 
@@ -8,6 +9,6 @@ int main(int argc, char *argv[]) {
     Filesystem *w = new Filesystem();
     Login *login = new Login();
     login->show();
-    QObject::connect(login, SIGNAL(try_login()), w, SLOT(show()));
+    QObject::connect(login, SIGNAL(try_login()), w, SLOT(init()));
     return a.exec();
 }
