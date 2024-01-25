@@ -23,6 +23,11 @@ public slots:
     void parseBucket();
     void tableDoubleClick(int, int);
     void intoDir();
+    void download();
+
+private slots:
+
+    void on_pushButtonBack_clicked();
 
 private:
     Ui::Filesystem *ui;

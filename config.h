@@ -23,10 +23,10 @@ public:
     QNetworkRequest *getVersion(bool);
     QNetworkRequest *getBucket();
     QNetworkRequest *getCatalog(std::string);
+    QNetworkRequest *getDownload(std::string, std::string);
 
 private:
     void WriteNull();
-    // QNetworkRequest *concat(bool auth, std::string path);
     QNetworkRequest *authRequest(QNetworkRequest *);
     QNetworkRequest *concatUrl(const std::string path, std::map<std::string, std::string> query = std::map<std::string, std::string>(), std::string data = "");
 

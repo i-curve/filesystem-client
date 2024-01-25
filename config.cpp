@@ -56,6 +56,15 @@ QNetworkRequest *Config::getCatalog(std::string path) {
     return req;
 }
 
+QNetworkRequest *Config::getDownload(std::string bucket, std::string key) {
+    bucket = bucket.substr(1, bucket.size() - 1);
+    key = key.substr(1, key.size() - 1);
+    std::map<std::string, std::string> mp = {{"bucket", bucket}, {"key", key}};
+    auto req = this->concatUrl("/file/download", mp);
+    this->authRequest(req);
+    return req;
+}
+
 void Config::WriteNull() {
     std::ofstream file("config.json");
     defer(file.close());
@@ -63,17 +72,6 @@ void Config::WriteNull() {
         file << "{}";
     }
 }
-
-// QNetworkRequest *Config::concat(bool auth, std::string path) {
-//     QUrl url = QUrl(apiHost.c_str());
-//     url.setPath(path.c_str());
-//     QNetworkRequest *request = new QNetworkRequest(url);
-//     if (auth) {
-//         request->setRawHeader("user", this->user.c_str());
-//         request->setRawHeader("auth", this->auth.c_str());
-//     }
-//     return request;
-// }
 
 QNetworkRequest *Config::authRequest(QNetworkRequest *request) {
     request->setRawHeader("user", this->user.c_str());
