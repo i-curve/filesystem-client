@@ -65,6 +65,12 @@ QNetworkRequest *Config::getDownload(std::string bucket, std::string key) {
     return req;
 }
 
+QNetworkRequest *Config::postFile() {
+    auto req = this->concatUrl("/file/upload");
+    this->authRequest(req);
+    return req;
+}
+
 void Config::WriteNull() {
     std::ofstream file("config.json");
     defer(file.close());

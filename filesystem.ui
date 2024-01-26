@@ -57,7 +57,7 @@
         </font>
        </property>
        <property name="text">
-        <string>文件系统:</string>
+        <string>路径:</string>
        </property>
       </widget>
      </item>
@@ -87,7 +87,22 @@
         </font>
        </property>
        <property name="text">
-        <string>back</string>
+        <string>返回</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>上传</string>
        </property>
       </widget>
      </item>

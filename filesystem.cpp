@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <QHttpMultiPart>
 #include <fmt/core.h>
 #include "util.hpp"
 #include "./ui_filesystem.h"
@@ -54,6 +55,7 @@ void Filesystem::parseBucket() {
 }
 
 void Filesystem::tableDoubleClick(int row, int col) {
+    ui->pushButton->setDisabled(false);
     auto file = ui->tableWidget->model()->index(row, 0).data().toString().toStdString();
     auto isDir = ui->tableWidget->model()->index(row, 1).data() == "是" ? true : false;
     if (isDir) { // 目录则进入目录里面
@@ -70,6 +72,8 @@ void Filesystem::tableDoubleClick(int row, int col) {
         QString dir = QFileDialog::getExistingDirectory(this, tr("保存到"),
                                                         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                                                         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+        if (dir == "")
+            return;
         this->filename = dir + "/" + QString::fromStdString(file);
         QNetworkReply *reply = http->get(*config.getDownload(this->currentBucket, key));
         connect(reply, &QNetworkReply::finished, this, &Filesystem::download);
@@ -111,6 +115,7 @@ void Filesystem::download() {
 void Filesystem::on_pushButtonBack_clicked() {
     if (this->currentKey.empty()) {
         this->currentBucket = "";
+        ui->pushButton->setDisabled(true);
     }
     if (this->currentBucket.empty()) {
         QNetworkReply *reply = http->get(*config.getBucket());
@@ -125,4 +130,50 @@ void Filesystem::on_pushButtonBack_clicked() {
     auto path = fmt::format("{}{}", this->currentBucket, this->currentKey);
     QNetworkReply *reply = http->get(*config.getCatalog(path));
     connect(reply, &QNetworkReply::finished, this, &Filesystem::intoDir);
+}
+
+void Filesystem::on_pushButton_clicked() {
+    QString fullname = QFileDialog::getOpenFileName(this,
+                                                    tr("选择文件"),
+                                                    QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
+    if (fullname == "")
+        return;
+
+    QFile *file = new QFile(fullname);
+    file->open(QIODevice::ReadOnly);
+    auto filename = QFileInfo(*file).fileName().toStdString();
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    QHttpPart filePart, bucketPart, keyPart;
+
+    filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                       QVariant(fmt::format("form-data; name=\"file\"; filename=\"{}\"", filename).c_str()));
+    filePart.setBodyDevice(file);
+    multiPart->append(filePart);
+
+    bucketPart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                         QVariant("form-data; name=\"bucket\""));
+    auto bucket = this->currentBucket.substr(1, this->currentBucket.size() - 1);
+    bucketPart.setBody(bucket.c_str());
+    multiPart->append(bucketPart);
+
+    keyPart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                      QVariant("form-data; name=\"key\""));
+    if (this->currentKey.empty())
+        keyPart.setBody(filename.c_str());
+    else {
+        auto key = this->currentKey.substr(1, this->currentKey.size() - 1) + "/" + filename;
+        keyPart.setBody(key.c_str());
+    }
+    multiPart->append(keyPart);
+
+    QNetworkReply *reply = http->post(*config.postFile(), multiPart);
+    connect(reply, &QNetworkReply::finished, [=, this]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 201) {
+            QMessageBox::information(this, "提示", "文件上传失败");
+        }
+        auto key = fmt::format("{}{}", this->currentBucket, this->currentKey);
+        QNetworkReply *reply2 = http->get(*config.getCatalog(key));
+        connect(reply2, &QNetworkReply::finished, this, &Filesystem::intoDir);
+    });
 }

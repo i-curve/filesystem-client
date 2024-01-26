@@ -24,6 +24,7 @@ public:
     QNetworkRequest *getBucket();
     QNetworkRequest *getCatalog(std::string);
     QNetworkRequest *getDownload(std::string, std::string);
+    QNetworkRequest *postFile();
 
 private:
     void WriteNull();

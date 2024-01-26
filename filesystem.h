@@ -30,6 +30,8 @@ private slots:
 
     void on_pushButtonBack_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::Filesystem *ui;
     std::string currentBucket;
