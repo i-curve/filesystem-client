@@ -26,7 +26,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         login.h login.cpp login.ui
         config.h config.cpp
         util.hpp
-        bucket.h bucket.cpp
         README.md
 
     )

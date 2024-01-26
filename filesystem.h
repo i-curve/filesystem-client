@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QFile>
 #include "config.h"
-#include "bucket.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
