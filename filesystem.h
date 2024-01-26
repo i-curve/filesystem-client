@@ -2,6 +2,7 @@
 #define FILESYSTEM_H
 
 #include <QMainWindow>
+#include <QFile>
 #include "config.h"
 #include "bucket.h"
 
@@ -33,5 +34,6 @@ private:
     Ui::Filesystem *ui;
     std::string currentBucket;
     std::string currentKey;
+    QString filename;
 };
 #endif // FILESYSTEM_H

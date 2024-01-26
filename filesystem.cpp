@@ -1,6 +1,9 @@
 #include "filesystem.h"
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QStandardPaths>
 #include <fmt/core.h>
+#include "util.hpp"
 #include "./ui_filesystem.h"
 
 Filesystem::Filesystem(QWidget *parent)
@@ -36,7 +39,6 @@ void Filesystem::parseBucket() {
         return;
     }
     if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 200) {
-        qDebug() << reply->readAll();
         return;
     }
     ui->tableWidget->clearContents();
@@ -46,7 +48,6 @@ void Filesystem::parseBucket() {
     for (auto it = data.begin(); it != data.end(); it++) {
         auto row = ui->tableWidget->rowCount();
         ui->tableWidget->insertRow(row);
-        qDebug() << it->value("name", "null").c_str();
         ui->tableWidget->setItem(row, 0, new QTableWidgetItem(it->value("name", "").c_str()));
         ui->tableWidget->setItem(row, 1, new QTableWidgetItem("是"));
     }
@@ -66,6 +67,10 @@ void Filesystem::tableDoubleClick(int row, int col) {
         connect(reply, &QNetworkReply::finished, this, &Filesystem::intoDir);
     } else { // 文件则进行下载
         auto key = fmt::format("{}/{}", this->currentKey, file);
+        QString dir = QFileDialog::getExistingDirectory(this, tr("保存到"),
+                                                        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
+                                                        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+        this->filename = dir + "/" + QString::fromStdString(file);
         QNetworkReply *reply = http->get(*config.getDownload(this->currentBucket, key));
         connect(reply, &QNetworkReply::finished, this, &Filesystem::download);
     }
@@ -96,7 +101,11 @@ void Filesystem::download() {
         QMessageBox::information(this, "提示", "请求错误");
         return;
     }
-    qDebug() << reply->readAll();
+    auto data = reply->readAll();
+    QFile file(filename);
+    defer(file.close());
+    file.open(QIODevice::ReadWrite | QIODevice::Text);
+    file.write(data);
 }
 
 void Filesystem::on_pushButtonBack_clicked() {
