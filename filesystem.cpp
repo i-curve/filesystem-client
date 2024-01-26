@@ -7,13 +7,13 @@ Filesystem::Filesystem(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::Filesystem) {
     ui->setupUi(this);
 
-    ui->tableWidget->setColumnCount(3);
-    QStringList horizontalHeaderLabels;
-    horizontalHeaderLabels << "文件名"
-                           << "目录"
-                           << "大小"
-                           << "下载";
-    ui->tableWidget->setHorizontalHeaderLabels(horizontalHeaderLabels);
+    // ui->tableWidget->setColumnCount(2);
+    // QStringList horizontalHeaderLabels;
+    // horizontalHeaderLabels << "文件名"
+    //                        << "目录"
+    //                        << "大小"
+    //                        << "下载";
+    // ui->tableWidget->setHorizontalHeaderLabels(horizontalHeaderLabels);
     ui->tableWidget->setColumnWidth(0, 400);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(ui->tableWidget, SIGNAL(cellDoubleClicked(int, int)), this, SLOT(tableDoubleClick(int, int)));
