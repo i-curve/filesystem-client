@@ -6,6 +6,7 @@
 #include <fmt/core.h>
 #include "util.hpp"
 #include "./ui_filesystem.h"
+#include "uploadselect.h"
 
 Filesystem::Filesystem(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::Filesystem) {
@@ -139,6 +140,12 @@ void Filesystem::on_pushButton_clicked() {
     if (fullname == "")
         return;
 
+    auto uploadSelect = new UploadSelect(this, this->currentBucket, this->currentKey);
+    auto status = uploadSelect->exec();
+    if (status == QDialog::Rejected) {
+        return;
+    }
+
     QFile *file = new QFile(fullname);
     file->open(QIODevice::ReadOnly);
     auto filename = QFileInfo(*file).fileName().toStdString();
@@ -152,16 +159,16 @@ void Filesystem::on_pushButton_clicked() {
 
     bucketPart.setHeader(QNetworkRequest::ContentDispositionHeader,
                          QVariant("form-data; name=\"bucket\""));
-    auto bucket = this->currentBucket.substr(1, this->currentBucket.size() - 1);
+    auto bucket = uploadSelect->bucket.substr(1, uploadSelect->bucket.size() - 1);
     bucketPart.setBody(bucket.c_str());
     multiPart->append(bucketPart);
 
     keyPart.setHeader(QNetworkRequest::ContentDispositionHeader,
                       QVariant("form-data; name=\"key\""));
-    if (this->currentKey.empty())
+    if (uploadSelect->key.empty())
         keyPart.setBody(filename.c_str());
     else {
-        auto key = this->currentKey.substr(1, this->currentKey.size() - 1) + "/" + filename;
+        auto key = uploadSelect->key.substr(1, uploadSelect->key.size() - 1) + "/" + filename;
         keyPart.setBody(key.c_str());
     }
     multiPart->append(keyPart);

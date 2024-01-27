@@ -27,6 +27,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         config.h config.cpp
         util.hpp
         README.md
+        uploadselect.h uploadselect.cpp uploadselect.ui
 
     )
 # Define target properties for Android with Qt 6 as:
