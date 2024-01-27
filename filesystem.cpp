@@ -22,10 +22,43 @@ Filesystem::Filesystem(QWidget *parent)
     ui->tableWidget->setColumnWidth(0, 400);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(ui->tableWidget, SIGNAL(cellDoubleClicked(int, int)), this, SLOT(tableDoubleClick(int, int)));
+    ui->tableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tableWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(rightClickedSlot(QPoint)));
 }
 
 Filesystem::~Filesystem() {
     delete ui;
+}
+
+void Filesystem::rightClickedSlot(QPoint pos) {
+    QTableWidgetItem *item = ui->tableWidget->itemAt(pos);
+    if (item == nullptr)
+        return;
+    auto row = item->row();
+    auto dir = ui->tableWidget->model()->index(row, 1).data().toString();
+    if (dir == "是")
+        return;
+    auto filename = ui->tableWidget->model()->index(row, 0).data().toString().toStdString();
+    qDebug() << filename.c_str();
+    QMenu *pMenu = new QMenu(this);
+    pMenu->setContextMenuPolicy(Qt::CustomContextMenu);
+    // QAction *pModifyTask = new QAction(QString(u8"修改"), this); // 修改
+    QAction *pDelTask = new QAction(QString(u8"删除"), this); // 删除
+    pMenu->addAction(pDelTask);
+    connect(pDelTask, &QAction::triggered, [=, this]() {
+        QNetworkReply *reply = http->deleteResource(*config.deleteFile(this->currentBucket, this->currentKey + "/" + filename));
+        connect(reply, &QNetworkReply::finished, [=, this]() {
+            reply->deleteLater();
+            if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 204) {
+                QMessageBox::information(this, "提示", "文件删除失败");
+                return;
+            }
+            this->flushDir();
+        });
+    });
+    pMenu->exec(QCursor::pos());
+    delete pDelTask;
+    delete pMenu;
 }
 
 void Filesystem::init() {
@@ -45,8 +78,7 @@ void Filesystem::parseBucket() {
     }
     ui->tableWidget->clearContents();
     ui->tableWidget->setRowCount(0);
-    auto res = reply->readAll();
-    auto data = nlohmann::json::parse(res.data());
+    auto data = nlohmann::json::parse(reply->readAll().data());
     for (auto it = data.begin(); it != data.end(); it++) {
         auto row = ui->tableWidget->rowCount();
         ui->tableWidget->insertRow(row);
@@ -85,7 +117,8 @@ void Filesystem::intoDir() {
     ui->label_2->setText(QString::fromStdString(fmt::format("{}{}", this->currentBucket, this->currentKey)));
     QNetworkReply *reply = (QNetworkReply *)(sender());
     if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 200) {
-        QMessageBox::information(this, "提示", "请求错误");
+        ui->tableWidget->clearContents();
+        ui->tableWidget->setRowCount(0);
         return;
     }
     ui->tableWidget->clearContents();
@@ -113,6 +146,12 @@ void Filesystem::download() {
     file.write(data);
 }
 
+void Filesystem::flushDir() {
+    auto key = fmt::format("{}{}", this->currentBucket, this->currentKey);
+    QNetworkReply *reply2 = http->get(*config.getCatalog(key));
+    connect(reply2, &QNetworkReply::finished, this, &Filesystem::intoDir);
+}
+
 void Filesystem::on_pushButtonBack_clicked() {
     if (this->currentKey.empty()) {
         this->currentBucket = "";
@@ -128,9 +167,7 @@ void Filesystem::on_pushButtonBack_clicked() {
     });
     int len = index - this->currentKey.rbegin() + 1;
     this->currentKey.erase(this->currentKey.end() - len, this->currentKey.end());
-    auto path = fmt::format("{}{}", this->currentBucket, this->currentKey);
-    QNetworkReply *reply = http->get(*config.getCatalog(path));
-    connect(reply, &QNetworkReply::finished, this, &Filesystem::intoDir);
+    this->flushDir();
 }
 
 void Filesystem::on_pushButton_clicked() {
@@ -179,8 +216,6 @@ void Filesystem::on_pushButton_clicked() {
         if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 201) {
             QMessageBox::information(this, "提示", "文件上传失败");
         }
-        auto key = fmt::format("{}{}", this->currentBucket, this->currentKey);
-        QNetworkReply *reply2 = http->get(*config.getCatalog(key));
-        connect(reply2, &QNetworkReply::finished, this, &Filesystem::intoDir);
+        this->flushDir();
     });
 }

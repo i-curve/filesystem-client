@@ -19,11 +19,14 @@ public:
     ~Filesystem();
 
 public slots:
+    void rightClickedSlot(QPoint);
     void init();
     void parseBucket();
     void tableDoubleClick(int, int);
     void intoDir();
     void download();
+    // flushDir: 刷新当前目录
+    void flushDir();
 
 private slots:
 

@@ -57,8 +57,10 @@ QNetworkRequest *Config::getCatalog(std::string path) {
 }
 
 QNetworkRequest *Config::getDownload(std::string bucket, std::string key) {
-    bucket = bucket.substr(1, bucket.size() - 1);
-    key = key.substr(1, key.size() - 1);
+    if (bucket.size() > 0 && bucket[0] == '/')
+        bucket = bucket.substr(1, bucket.size() - 1);
+    if (key.size() > 0 && key[0] == '/')
+        key = key.substr(1, key.size() - 1);
     std::map<std::string, std::string> mp = {{"bucket", bucket}, {"key", key}};
     auto req = this->concatUrl("/file/download", mp);
     this->authRequest(req);
@@ -67,6 +69,17 @@ QNetworkRequest *Config::getDownload(std::string bucket, std::string key) {
 
 QNetworkRequest *Config::postFile() {
     auto req = this->concatUrl("/file/upload");
+    this->authRequest(req);
+    return req;
+}
+
+QNetworkRequest *Config::deleteFile(std::string bucket, std::string key) {
+    if (bucket.size() > 0 && bucket[0] == '/')
+        bucket = bucket.substr(1, bucket.size() - 1);
+    if (key.size() > 0 && key[0] == '/')
+        key = key.substr(1, key.size() - 1);
+    std::map<std::string, std::string> mp = {{"bucket", bucket}, {"key", key}};
+    auto req = this->concatUrl("/file/delete", mp);
     this->authRequest(req);
     return req;
 }
