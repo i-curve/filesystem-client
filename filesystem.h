@@ -25,6 +25,9 @@ public slots:
     void tableDoubleClick(int, int);
     void intoDir();
     void download();
+    void addBucket();
+    void deleteBucket(std::string);
+    void deleteFile(std::string);
     // flushDir: 刷新当前目录
     void flushDir();
 

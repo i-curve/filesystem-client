@@ -39,7 +39,7 @@
      </property>
     </column>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>41</x>
@@ -75,7 +75,7 @@
         </font>
        </property>
        <property name="text">
-        <string>/</string>
+        <string/>
        </property>
       </widget>
      </item>

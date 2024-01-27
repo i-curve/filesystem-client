@@ -7,6 +7,7 @@
 #include "util.hpp"
 #include "./ui_filesystem.h"
 #include "uploadselect.h"
+#include "addbucket.h"
 
 Filesystem::Filesystem(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::Filesystem) {
@@ -32,33 +33,21 @@ Filesystem::~Filesystem() {
 
 void Filesystem::rightClickedSlot(QPoint pos) {
     QTableWidgetItem *item = ui->tableWidget->itemAt(pos);
-    if (item == nullptr)
+    if (item == nullptr) {
+        if (this->currentBucket.empty())
+            this->addBucket();
         return;
+    }
+
     auto row = item->row();
     auto dir = ui->tableWidget->model()->index(row, 1).data().toString();
-    if (dir == "是")
-        return;
     auto filename = ui->tableWidget->model()->index(row, 0).data().toString().toStdString();
-    qDebug() << filename.c_str();
-    QMenu *pMenu = new QMenu(this);
-    pMenu->setContextMenuPolicy(Qt::CustomContextMenu);
-    // QAction *pModifyTask = new QAction(QString(u8"修改"), this); // 修改
-    QAction *pDelTask = new QAction(QString(u8"删除"), this); // 删除
-    pMenu->addAction(pDelTask);
-    connect(pDelTask, &QAction::triggered, [=, this]() {
-        QNetworkReply *reply = http->deleteResource(*config.deleteFile(this->currentBucket, this->currentKey + "/" + filename));
-        connect(reply, &QNetworkReply::finished, [=, this]() {
-            reply->deleteLater();
-            if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 204) {
-                QMessageBox::information(this, "提示", "文件删除失败");
-                return;
-            }
-            this->flushDir();
-        });
-    });
-    pMenu->exec(QCursor::pos());
-    delete pDelTask;
-    delete pMenu;
+    if (dir == "否") { // 删除文件
+        this->deleteFile(filename);
+        return;
+    } else if (this->currentKey.empty() && this->currentBucket.empty()) { // 删除bucket
+        this->deleteBucket(filename);
+    }
 }
 
 void Filesystem::init() {
@@ -68,6 +57,7 @@ void Filesystem::init() {
 }
 
 void Filesystem::parseBucket() {
+    ui->label_2->setText("/");
     QNetworkReply *reply = (QNetworkReply *)(sender());
     if (reply->error() != QNetworkReply::NoError) {
         QMessageBox::information(this, "tips", "bucket 请求错误");
@@ -146,7 +136,92 @@ void Filesystem::download() {
     file.write(data);
 }
 
+void Filesystem::addBucket() {
+    QMenu *pMenu = new QMenu(this);
+    pMenu->setContextMenuPolicy(Qt::CustomContextMenu);
+    QAction *pAddBucket = new QAction(QString(u8"添加bucket"), this); // 添加bucket
+    pMenu->addAction(pAddBucket);
+    connect(pAddBucket, &QAction::triggered, [=, this]() {
+        AddBucket *addBucket = new AddBucket();
+        auto retStatus = addBucket->exec();
+        if (retStatus == QDialog::Rejected)
+            return;
+        auto bucket = addBucket->bucketName.toStdString();
+        if (std::count(bucket.begin(), bucket.end(), '/') > 0) {
+            QMessageBox::warning(this, "错误", "bucket 名字不能包含特殊字符");
+            return;
+        }
+        if (!bucket.empty() && bucket[0] == '/')
+            bucket = bucket.substr(1, bucket.size() - 1);
+        nlohmann::json data;
+        data["name"] = bucket;
+        data["b_type"] = 3;
+        QNetworkReply *reply = http->post(*config.addBucket(), QByteArray(data.dump().c_str()));
+        connect(reply, &QNetworkReply::finished, [=, this]() {
+            reply->deleteLater();
+            auto res = reply->error();
+            if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 201) {
+                QMessageBox::information(this, "提示", "bucket添加失败");
+                return;
+            }
+            this->flushDir();
+        });
+    });
+    pMenu->exec(QCursor::pos());
+    delete pAddBucket;
+    delete pMenu;
+}
+
+void Filesystem::deleteBucket(std::string bucket) {
+    QMenu *pMenu = new QMenu(this);
+    pMenu->setContextMenuPolicy(Qt::CustomContextMenu);
+    // QAction *pModifyTask = new QAction(QString(u8"修改"), this); // 修改
+    QAction *pDelTask = new QAction(QString(u8"删除"), this); // 删除
+    pMenu->addAction(pDelTask);
+    connect(pDelTask, &QAction::triggered, [=, this]() {
+        QNetworkReply *reply = http->deleteResource(*config.deleteBucket(bucket));
+        connect(reply, &QNetworkReply::finished, [=, this]() {
+            reply->deleteLater();
+            if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 204) {
+                QMessageBox::information(this, "提示", "bucket删除失败");
+                return;
+            }
+            this->flushDir();
+        });
+    });
+    pMenu->exec(QCursor::pos());
+    delete pDelTask;
+    delete pMenu;
+}
+
+void Filesystem::deleteFile(std::string filename) {
+    QMenu *pMenu = new QMenu(this);
+    pMenu->setContextMenuPolicy(Qt::CustomContextMenu);
+    // QAction *pModifyTask = new QAction(QString(u8"修改"), this); // 修改
+    QAction *pDelTask = new QAction(QString(u8"删除"), this); // 删除
+    pMenu->addAction(pDelTask);
+    connect(pDelTask, &QAction::triggered, [=, this]() {
+        QNetworkReply *reply = http->deleteResource(*config.deleteFile(this->currentBucket, this->currentKey + "/" + filename));
+        connect(reply, &QNetworkReply::finished, [=, this]() {
+            reply->deleteLater();
+            if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 204) {
+                QMessageBox::information(this, "提示", "文件删除失败");
+                return;
+            }
+            this->flushDir();
+        });
+    });
+    pMenu->exec(QCursor::pos());
+    delete pDelTask;
+    delete pMenu;
+}
+
 void Filesystem::flushDir() {
+    if (this->currentBucket.empty()) {
+        auto reply = http->get(*config.getBucket());
+        connect(reply, &QNetworkReply::finished, this, &Filesystem::parseBucket);
+        return;
+    }
     auto key = fmt::format("{}{}", this->currentBucket, this->currentKey);
     QNetworkReply *reply2 = http->get(*config.getCatalog(key));
     connect(reply2, &QNetworkReply::finished, this, &Filesystem::intoDir);

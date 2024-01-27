@@ -25,6 +25,8 @@ public:
     QNetworkRequest *getCatalog(std::string);
     QNetworkRequest *getDownload(std::string, std::string);
     QNetworkRequest *postFile();
+    QNetworkRequest *addBucket();
+    QNetworkRequest *deleteBucket(std::string);
     QNetworkRequest *deleteFile(std::string, std::string);
 
 private:

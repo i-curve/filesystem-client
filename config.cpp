@@ -2,6 +2,8 @@
 #include <QUrlQuery>
 #include "config.h"
 #include "util.hpp"
+using std::map;
+using std::string;
 
 Config::Config() {
     try {
@@ -69,6 +71,22 @@ QNetworkRequest *Config::getDownload(std::string bucket, std::string key) {
 
 QNetworkRequest *Config::postFile() {
     auto req = this->concatUrl("/file/upload");
+    this->authRequest(req);
+    return req;
+}
+
+QNetworkRequest *Config::addBucket() {
+    auto req = this->concatUrl("/bucket");
+    this->authRequest(req);
+    req->setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    return req;
+}
+
+QNetworkRequest *Config::deleteBucket(std::string bucket) {
+    if (!bucket.empty() && bucket[0] == '/')
+        bucket = bucket.substr(1, bucket.size() - 1);
+    map<string, string> mp = {{"name", bucket}};
+    auto req = this->concatUrl("/bucket", mp);
     this->authRequest(req);
     return req;
 }

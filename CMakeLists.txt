@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         util.hpp
         README.md
         uploadselect.h uploadselect.cpp uploadselect.ui
+        addbucket.h addbucket.cpp addbucket.ui
 
     )
 # Define target properties for Android with Qt 6 as:
