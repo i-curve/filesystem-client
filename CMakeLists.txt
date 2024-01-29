@@ -17,6 +17,7 @@ set(PROJECT_SOURCES
         filesystem.cpp
         filesystem.h
         filesystem.ui
+        logo.rc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
