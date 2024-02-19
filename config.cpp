@@ -36,9 +36,9 @@ void Config::Write(bool status) {
     }
 }
 
+// https://raw.githubusercontent.com/i-curve/filesystem-client/master/version.json
 QNetworkRequest *Config::upgrade() {
-    // https://github.com/i-curve/filesystem-client/raw/master/version.json
-    return new QNetworkRequest(QUrl("https://github.com/i-curve/filesystem-client/raw/master/version.json"));
+    return new QNetworkRequest(QUrl("https://raw.githubusercontent.com/i-curve/filesystem-client/master/version.json"));
 }
 
 QNetworkRequest *Config::getVersion(bool flag) {

@@ -27,8 +27,9 @@ Filesystem::Filesystem(QWidget *parent)
     connect(ui->tableWidget, SIGNAL(cellDoubleClicked(int, int)), this, SLOT(tableDoubleClick(int, int)));
     ui->tableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(rightClickedSlot(QPoint)));
+    updateT.setInterval(1000 * 60 * 10);
     connect(&this->updateT, &QTimer::timeout, this, &Filesystem::upgrade);
-    this->updateT.start(1000 * 60 * 10);
+    updateT.start();
 }
 
 Filesystem::~Filesystem() {
