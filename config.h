@@ -20,6 +20,8 @@ public:
 
     void Write(bool);
 
+    QNetworkRequest *upgrade();
+
     QNetworkRequest *getVersion(bool);
     QNetworkRequest *getBucket();
     QNetworkRequest *getCatalog(std::string);
@@ -39,6 +41,9 @@ public:
     std::string user;
     std::string auth;
     std::string apiHost;
+
+public:
+    QString version = "0.2.0";
 };
 
 inline Config config;

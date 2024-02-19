@@ -4,6 +4,9 @@
 #include <QStandardPaths>
 #include <QHttpMultiPart>
 #include <fmt/core.h>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QProcess>
 #include "util.hpp"
 #include "./ui_filesystem.h"
 #include "uploadselect.h"
@@ -12,7 +15,6 @@
 Filesystem::Filesystem(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::Filesystem) {
     ui->setupUi(this);
-
     // ui->tableWidget->setColumnCount(2);
     // QStringList horizontalHeaderLabels;
     // horizontalHeaderLabels << "文件名"
@@ -25,6 +27,8 @@ Filesystem::Filesystem(QWidget *parent)
     connect(ui->tableWidget, SIGNAL(cellDoubleClicked(int, int)), this, SLOT(tableDoubleClick(int, int)));
     ui->tableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(rightClickedSlot(QPoint)));
+    connect(&this->updateT, &QTimer::timeout, this, &Filesystem::upgrade);
+    this->updateT.start(1000 * 60 * 10);
 }
 
 Filesystem::~Filesystem() {
@@ -292,5 +296,46 @@ void Filesystem::on_pushButton_clicked() {
             QMessageBox::information(this, "提示", "文件上传失败");
         }
         this->flushDir();
+    });
+}
+
+void Filesystem::upgrade() {
+    QNetworkReply *reply = http->get(*config.upgrade());
+    connect(reply, &QNetworkReply::finished, [=, this]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute) != 200) {
+            return;
+        }
+        QJsonDocument data = QJsonDocument::fromJson(reply->readAll());
+        if (!data.isNull()) {
+            auto jsonObj = data.object();
+            QString version = jsonObj["version"].toString();
+#if WIN32
+            QString downloadUrl = jsonObj["download-win"].toString();
+#else
+            QString downloadUrl = jsonObj["download-linux"].toString();
+#endif
+
+            // QString downloadUrl = jsonOb
+            if (config.version < version) {
+                auto res = QMessageBox::information(this, "upgarde", "check a new version, are you want to upgrade?");
+                if (res == QMessageBox::Ok) {
+                    // 执行更新程序
+                    QProcess fsupgrade;
+#if WIN32
+                    QString pname = "./fsupgrade.exe";
+#else
+                    QString pname = "./fsupgrade";
+#endif
+                    QStringList args;
+                    args << downloadUrl;
+                    fsupgrade.start(QString("./fsupgrade"), args);
+                    // 退出本程序
+                    close();
+                } else if (res == QMessageBox::Cancel) {
+                    this->updateT.stop();
+                }
+            }
+        }
     });
 }

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QFile>
+#include <QTimer>
 #include "config.h"
 
 QT_BEGIN_NAMESPACE
@@ -36,11 +37,13 @@ private slots:
     void on_pushButtonBack_clicked();
 
     void on_pushButton_clicked();
+    void upgrade();
 
 private:
     Ui::Filesystem *ui;
     std::string currentBucket;
     std::string currentKey;
     QString filename;
+    QTimer updateT;
 };
 #endif // FILESYSTEM_H
