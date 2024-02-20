@@ -20,6 +20,13 @@ set(PROJECT_SOURCES
         logo.rc
 )
 
+# set(UPGRADE_SOURCES
+#     fsupgrade.cpp
+#     upgrade.cpp
+#     upgrade.h
+#     upgrade.ui
+#     upgrade.rc)
+
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(filesystem-client
         MANUAL_FINALIZATION
@@ -30,8 +37,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         README.md
         uploadselect.h uploadselect.cpp uploadselect.ui
         addbucket.h addbucket.cpp addbucket.ui
-
+        version.json
     )
+    # qt_add_executable(fsupgrade
+    #     MANUAL_FINALIZATION
+    #     ${UPGRADE_SOURCES}
+    # )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET filesystem-client APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -41,12 +52,15 @@ else()
         add_library(filesystem-client SHARED
             ${PROJECT_SOURCES}
         )
+    # add_library(fsupgrade SHARED
+    # ${UPGRADE_SOURCES})
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
         add_executable(filesystem-client
             ${PROJECT_SOURCES}
         )
+    # add_executable(fsupgrade ${UPGRADE_SOURCES})
     endif()
 endif()
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -55,6 +69,8 @@ find_package(fmt CONFIG REQUIRED)
 target_link_libraries(filesystem-client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network
     nlohmann_json::nlohmann_json fmt::fmt)
+# target_link_libraries(fsupgrade PRIVATE
+#     Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
@@ -69,6 +85,13 @@ set_target_properties(filesystem-client PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+# set_target_properties(fsupgrade PROPERTIES
+#     ${BUNDLE_ID_OPTION}
+#     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+#     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+#     MACOSX_BUNDLE TRUE
+#     WIN32_EXECUTABLE TRUE
+# )
 
 include(GNUInstallDirs)
 install(TARGETS filesystem-client
