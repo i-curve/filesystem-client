@@ -2,7 +2,7 @@
     "name": "filesystem-client",
     "author": "i-curve",
     "description": "a qt client for filesystem.",
-    "version": "0.2.0",
-    "download-win": "https://github.com/i-curve/filesystem-client/releases/download/v0.2.0/filesystem-client-win-x86_64-release.zip",
+    "version": "0.3.0",
+    "download-win": "https://github.com/i-curve/filesystem-client/releases/download/v0.3.0/filesystem-client-setup.exe",
     "download-linux": ""
 }

@@ -43,7 +43,7 @@ public:
     std::string apiHost;
 
 public:
-    QString version = "0.2.0";
+    QString version = "0.3.0";
 };
 
 inline Config config;
